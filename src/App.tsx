@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, X, Image as ImageIcon, Check, Barcode, Search, MoveHorizontal, MapPin } from 'lucide-react'
-import { useInventoryStore, MOCK_LOCATIONS, MOCK_PRODUCTS_BY_LOC, LocationInfo, InventoryProduct } from './store'
+import { useInventoryStore, MOCK_LOCATIONS, MOCK_PRODUCTS_BY_LOC } from './store'
 
 type Screen = 'HOME' | 'ASN_INPUT' | 'SKU_LIST' | 'DETAIL' | 'INV_LOC_INPUT' | 'INV_PROD_SELECT'
 type Mode = 'Standard' | 'Basic'
