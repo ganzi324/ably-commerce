@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowLeft, X, Image as ImageIcon, Check } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { ArrowLeft, X, Image as ImageIcon, Check, Barcode } from 'lucide-react'
 
 type Screen = 'ASN_INPUT' | 'SKU_LIST' | 'DETAIL'
 type Mode = 'Standard' | 'Basic'
@@ -93,18 +93,25 @@ export default function App() {
     setScreen('SKU_LIST')
   }
 
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select()
+  }
+
   const renderHeader = (title: string, showBack = true) => (
-    <header className="bg-black text-white p-3 flex flex-col gap-1 shadow-md shrink-0">
+    <header className="bg-black text-white p-2 flex flex-col gap-0.5 shadow-md shrink-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {showBack && (
             <button onClick={() => setScreen(screen === 'DETAIL' ? 'SKU_LIST' : 'ASN_INPUT')} className="p-1">
-              <ArrowLeft size={24} />
+              <ArrowLeft size={20} />
             </button>
           )}
-          <span className="font-bold text-lg">{title}</span>
-          {screen === 'SKU_LIST' && (
-            <span className="bg-blue-600 text-[10px] px-2 py-0.5 rounded-full font-bold ml-1">
+          <div className="flex flex-col">
+            <span className="font-light text-base leading-tight">{title}</span>
+            <span className="text-[9px] text-gray-400 font-bold tracking-wider">ABLY WMS</span>
+          </div>
+          {(screen === 'SKU_LIST' || screen === 'DETAIL') && (
+            <span className="bg-blue-600 text-[9px] px-1.5 py-0.5 rounded-full font-bold ml-1">
               {mode}
             </span>
           )}
@@ -113,12 +120,12 @@ export default function App() {
           <input
             type="text"
             placeholder="바코드 입력"
-            className="bg-gray-800 text-white text-xs p-1.5 rounded w-24 outline-none border border-gray-700"
+            className="bg-gray-800 text-white text-[10px] p-1 rounded w-20 outline-none border border-gray-700"
           />
         )}
       </div>
       {screen === 'SKU_LIST' && (
-        <div className="text-[11px] text-gray-400 ml-1">ASN: {asn}</div>
+        <div className="text-[10px] text-gray-400 ml-1">ASN: {asn}</div>
       )}
     </header>
   )
@@ -127,21 +134,28 @@ export default function App() {
     switch (screen) {
       case 'ASN_INPUT':
         return (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
             {renderHeader('ASN 입고', false)}
-            <div className="flex-1 flex flex-col justify-center p-6 gap-6">
-              <div className="flex flex-col gap-4">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 text-center">
+              <div className="bg-gray-100 p-4 rounded-full text-gray-400 mb-2">
+                <Barcode size={48} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="text-lg font-bold">입고번호 입력</div>
+                <div className="text-xs text-gray-500">바코드를 스캔하거나 직접 입력하세요.</div>
+              </div>
+              <div className="w-full flex flex-col gap-3">
                 <input
                   type="text"
-                  placeholder="ASN 번호를 입력하거나 스캔하세요"
-                  className="border-2 border-gray-300 p-4 text-lg rounded-xl focus:border-blue-600 outline-none transition-all"
+                  placeholder="ASN-2026-04-001"
+                  className="border border-gray-300 p-2.5 text-center text-sm rounded-lg focus:border-blue-600 outline-none w-full shadow-inner"
                   value={asn}
                   onChange={(e) => setAsn(e.target.value)}
                   autoFocus
                 />
                 <button
                   onClick={() => asn && setScreen('SKU_LIST')}
-                  className="bg-blue-600 text-white p-4 rounded-xl text-xl font-bold shadow-lg active:scale-95 transition-transform"
+                  className="bg-gray-500 text-white p-3 rounded-lg text-base font-bold shadow active:bg-gray-600 transition-colors w-full"
                 >
                   검수 시작
                 </button>
@@ -155,12 +169,12 @@ export default function App() {
             {renderHeader('상품 목록')}
             
             {/* Progress Section */}
-            <div className="bg-gray-100 p-3 border-b border-gray-200 shrink-0">
-              <div className="flex justify-between text-xs font-bold mb-1">
+            <div className="bg-gray-100 p-2 border-b border-gray-200 shrink-0">
+              <div className="flex justify-between text-sm font-bold mb-1">
                 <span>전체 진행률</span>
-                <span>{totalReceived}/{totalExpected} ({progressPercent}%)</span>
+                <span className="text-blue-600">{totalReceived}/{totalExpected} ({progressPercent}%)</span>
               </div>
-              <div className="w-full bg-gray-300 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-gray-300 h-2 rounded-full overflow-hidden">
                 <div 
                   className="bg-green-500 h-full transition-all duration-500" 
                   style={{ width: `${progressPercent}%` }}
@@ -177,16 +191,16 @@ export default function App() {
                     setSelectedSkuId(sku.id)
                     setScreen('DETAIL')
                   }}
-                  className="w-full border-b border-gray-100 p-3 flex flex-col gap-0.5 text-left active:bg-gray-50"
+                  className="w-full border-b border-gray-100 p-2.5 flex flex-col gap-0 text-left active:bg-gray-50"
                 >
-                  <div className="text-[10px] text-blue-600 font-bold">{sku.code}</div>
-                  <div className="font-bold text-sm truncate">{sku.name}</div>
-                  <div className="text-[11px] text-gray-500 mb-1">{sku.option}</div>
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs font-bold">
+                  <div className="text-[9px] text-blue-600 font-bold">{sku.code}</div>
+                  <div className="font-bold text-xs truncate">{sku.name}</div>
+                  <div className="text-[10px] text-gray-500">{sku.option}</div>
+                  <div className="flex justify-between items-center mt-1">
+                    <div className="text-[11px] font-bold">
                       {sku.receivedQty}/{sku.expectedQty}
                     </div>
-                    <div className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                    <div className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
                       sku.status === '완료' ? 'bg-green-100 text-green-700' :
                       sku.status === '진행중' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                     }`}>
@@ -197,8 +211,8 @@ export default function App() {
               ))}
             </div>
 
-            <div className="p-3 bg-white border-t border-gray-200 shrink-0">
-              <button className="w-full bg-black text-white p-4 rounded-xl font-bold text-lg shadow-md active:bg-gray-900">
+            <div className="p-2 bg-white border-t border-gray-200 shrink-0">
+              <button className="w-full bg-black text-white p-2.5 rounded-lg font-bold text-base shadow active:bg-gray-900">
                 검수 완료
               </button>
             </div>
@@ -213,22 +227,22 @@ export default function App() {
             {renderHeader('상품 검수')}
             
             {/* Product Info Summary */}
-            <div className="bg-gray-50 p-3 border-b border-gray-200 flex flex-col gap-0.5 shrink-0">
-              <div className="text-[10px] text-blue-600 font-bold">{selectedSku.code}</div>
-              <div className="font-bold text-sm">{selectedSku.name}</div>
-              <div className="flex justify-between items-center text-[11px]">
+            <div className="bg-gray-50 p-2 border-b border-gray-200 flex flex-col gap-0 shrink-0">
+              <div className="text-[9px] text-blue-600 font-bold">{selectedSku.code}</div>
+              <div className="font-bold text-xs leading-tight">{selectedSku.name}</div>
+              <div className="flex justify-between items-center text-[10px]">
                 <span className="text-gray-500">{selectedSku.option}</span>
-                <span className="font-bold">진행: {selectedSku.receivedQty}/{selectedSku.expectedQty}</span>
+                <span className="font-bold text-sm">진행: {selectedSku.receivedQty}/{selectedSku.expectedQty}</span>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-4">
+            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-3">
               {/* Image Toggle Section */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {showImage ? (
                   <div className="relative">
                     <div 
-                      className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden"
+                      className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden border border-gray-200"
                       onClick={() => setShowImage(false)}
                     >
                       <img 
@@ -237,39 +251,39 @@ export default function App() {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="text-[10px] text-gray-400 text-center mt-1 italic">이미지 클릭 시 숨기기</div>
                   </div>
                 ) : (
                   <button 
                     onClick={() => setShowImage(true)}
-                    className="flex items-center justify-center gap-2 p-2 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 border border-gray-200"
+                    className="flex items-center justify-center gap-2 p-1.5 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-600 border border-gray-200"
                   >
-                    <ImageIcon size={14} /> 상품 이미지 보기
+                    <ImageIcon size={12} /> 상품 이미지 보기
                   </button>
                 )}
               </div>
 
               {/* Normal Quantity Section */}
-              <div className="flex flex-col gap-2">
-                <div className="text-sm font-bold">정상 수량</div>
+              <div className="flex flex-col gap-1.5">
+                <div className="text-xs font-bold">정상 수량</div>
                 <div className="flex items-center gap-1">
                   <button 
-                    className="flex-1 h-12 bg-gray-50 rounded-lg text-2xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200"
+                    className="w-10 h-10 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
                     onClick={() => {
                       setSkus(skus.map(s => s.id === selectedSku.id ? { ...s, receivedQty: Math.max(0, s.receivedQty - 1) } : s))
                     }}
                   >-</button>
                   <input 
                     type="number"
-                    className="w-20 h-12 text-center text-xl font-bold bg-white border border-gray-300 rounded-lg focus:border-blue-500 outline-none"
+                    className="flex-1 h-10 text-center text-xl font-bold bg-white border border-gray-300 rounded-lg focus:border-blue-500 outline-none"
                     value={selectedSku.receivedQty}
+                    onFocus={handleInputFocus}
                     onChange={(e) => {
                       const val = parseInt(e.target.value) || 0
                       setSkus(skus.map(s => s.id === selectedSku.id ? { ...s, receivedQty: val } : s))
                     }}
                   />
                   <button 
-                    className="flex-1 h-12 bg-gray-50 rounded-lg text-2xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200"
+                    className="w-10 h-10 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
                     onClick={() => {
                       setSkus(skus.map(s => s.id === selectedSku.id ? { ...s, receivedQty: s.receivedQty + 1 } : s))
                     }}
@@ -278,35 +292,34 @@ export default function App() {
               </div>
 
               {/* Defect Quantity Section */}
-              <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+              <div className="flex flex-col gap-1.5 border-t border-gray-100 pt-2">
                 <div className="flex justify-between items-center">
-                  <div className="text-sm font-bold">결함 수량</div>
-                  <div className="text-xs font-bold text-red-600">총 {totalDefects}개</div>
+                  <div className="text-xs font-bold">결함 수량</div>
+                  <div className="text-[11px] font-bold text-red-600">총 {totalDefects}개</div>
                 </div>
                 
                 <button 
                   onClick={() => setIsDefectModalOpen(true)}
-                  className="w-full p-3 bg-red-50 text-red-600 rounded-lg font-bold text-sm border border-red-100 flex items-center justify-center gap-1 active:bg-red-100"
+                  className="w-full p-2 bg-red-50 text-red-600 rounded-lg font-bold text-xs border border-red-100 flex items-center justify-center gap-1 active:bg-red-100"
                 >
                   + 결함 추가
                 </button>
 
                 {selectedSku.defects.length > 0 && (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     {selectedSku.defects.map((d) => (
-                      <div key={d.id} className="bg-white border border-gray-200 rounded-lg p-2 flex flex-col gap-2 shadow-sm">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-gray-700">{d.reason}</span>
-                        </div>
+                      <div key={d.id} className="bg-white border border-gray-200 rounded-lg p-1.5 flex items-center justify-between shadow-sm">
+                        <span className="font-bold text-[11px] text-gray-700 truncate flex-1 mr-2">{d.reason}</span>
                         <div className="flex items-center gap-1">
                           <button 
-                            className="flex-1 h-9 bg-gray-50 rounded text-xl font-bold border border-gray-200 active:bg-gray-200"
+                            className="w-7 h-7 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
                             onClick={() => updateDefectQty(selectedSku.id, d.id, -1)}
                           >-</button>
                           <input 
                             type="number"
-                            className="w-14 h-9 text-center text-sm font-bold border border-gray-300 rounded focus:border-blue-500 outline-none"
+                            className="w-10 h-7 text-center text-xs font-bold border border-gray-300 rounded focus:border-blue-500 outline-none"
                             value={d.qty}
+                            onFocus={handleInputFocus}
                             onChange={(e) => {
                               const val = parseInt(e.target.value) || 1
                               setSkus(skus.map(s => s.id === selectedSku.id ? {
@@ -315,14 +328,14 @@ export default function App() {
                             }}
                           />
                           <button 
-                            className="flex-1 h-9 bg-gray-50 rounded text-xl font-bold border border-gray-200 active:bg-gray-200"
+                            className="w-7 h-7 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
                             onClick={() => updateDefectQty(selectedSku.id, d.id, 1)}
                           >+</button>
                           <button 
                             onClick={() => deleteDefect(selectedSku.id, d.id)}
-                            className="w-9 h-9 flex items-center justify-center text-gray-400 bg-gray-100 rounded ml-1 active:bg-gray-200"
+                            className="w-7 h-7 flex items-center justify-center text-gray-400 bg-gray-100 rounded active:bg-gray-200 ml-0.5"
                           >
-                            <X size={16} />
+                            <X size={14} />
                           </button>
                         </div>
                       </div>
@@ -333,7 +346,7 @@ export default function App() {
 
               {mode === 'Standard' && (
                 <button 
-                  className="mt-2 bg-green-50 text-green-700 p-3 rounded-lg font-bold text-sm border border-green-200 active:bg-green-100"
+                  className="mt-1 bg-green-50 text-green-700 p-2 rounded-lg font-bold text-xs border border-green-200 active:bg-green-100 shadow-sm"
                   onClick={() => {
                     setPrintQty(selectedSku.receivedQty)
                     setIsPrintPopupOpen(true)
@@ -344,10 +357,10 @@ export default function App() {
               )}
             </div>
 
-            <div className="p-3 bg-white border-t border-gray-200 shrink-0">
+            <div className="p-2 bg-white border-t border-gray-200 shrink-0">
               <button 
                 onClick={() => setIsCompletePopupOpen(true)}
-                className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-lg shadow-md active:bg-blue-700"
+                className="w-full bg-black text-white p-3 rounded-lg font-bold text-base shadow active:bg-gray-900"
               >
                 SKU 검수완료
               </button>
@@ -355,38 +368,38 @@ export default function App() {
 
             {/* Modals & Popups */}
             {isDefectModalOpen && (
-              <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-                <div className="bg-white rounded-2xl w-full max-w-[280px] overflow-hidden shadow-2xl">
-                  <div className="bg-gray-50 p-3 border-b font-bold text-center">결함 사유 선택</div>
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-2xl w-full max-w-[240px] overflow-hidden shadow-2xl">
+                  <div className="bg-gray-50 p-2.5 border-b font-bold text-center text-sm">결함 사유 선택</div>
                   <div className="flex flex-col">
                     {DEFECT_REASONS.map(reason => (
                       <button 
                         key={reason}
                         onClick={() => handleDefectAdd(reason)}
-                        className="p-4 border-b border-gray-50 last:border-0 text-left active:bg-gray-100 font-medium"
+                        className="p-3 border-b border-gray-50 last:border-0 text-left active:bg-gray-100 font-medium text-xs"
                       >
                         {reason}
                       </button>
                     ))}
                   </div>
-                  <button onClick={() => setIsDefectModalOpen(false)} className="w-full p-4 text-gray-400 font-bold border-t active:bg-gray-50">취소</button>
+                  <button onClick={() => setIsDefectModalOpen(false)} className="w-full p-3 text-gray-400 font-bold border-t active:bg-gray-50 text-xs">취소</button>
                 </div>
               </div>
             )}
 
             {isCompletePopupOpen && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-2xl p-6 w-full max-w-[280px] flex flex-col gap-6 shadow-2xl text-center">
-                  <div className="flex flex-col gap-2">
-                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <Check size={32} />
+                <div className="bg-white rounded-2xl p-5 w-full max-w-[240px] flex flex-col gap-4 shadow-2xl text-center">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-1">
+                      <Check size={24} />
                     </div>
-                    <h2 className="text-xl font-bold">검수 완료</h2>
-                    <p className="text-gray-500 text-sm">해당 상품의 검수를<br/>완료 처리하시겠습니까?</p>
+                    <h2 className="text-lg font-bold">검수 완료</h2>
+                    <p className="text-gray-500 text-xs leading-relaxed">해당 상품의 검수를<br/>완료 처리하시겠습니까?</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => setIsCompletePopupOpen(false)} className="flex-1 p-3 bg-gray-100 rounded-xl font-bold active:bg-gray-200 text-gray-700">닫기</button>
-                    <button onClick={completeSku} className="flex-1 p-3 bg-blue-600 text-white rounded-xl font-bold active:bg-blue-700">확인</button>
+                    <button onClick={() => setIsCompletePopupOpen(false)} className="flex-1 p-2 bg-gray-100 rounded-xl font-bold active:bg-gray-200 text-gray-700 text-sm">닫기</button>
+                    <button onClick={completeSku} className="flex-1 p-2 bg-blue-600 text-white rounded-xl font-bold active:bg-blue-700 text-sm">확인</button>
                   </div>
                 </div>
               </div>
@@ -394,25 +407,25 @@ export default function App() {
 
             {isPrintPopupOpen && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-2xl p-6 w-full max-w-[280px] flex flex-col gap-4 shadow-2xl">
-                  <h2 className="text-xl font-bold text-center">라벨 출력</h2>
-                  <div className="border-2 border-dashed border-gray-300 p-4 flex flex-col items-center gap-2 rounded-xl bg-gray-50">
-                    <div className="w-full h-10 bg-black flex items-center justify-center text-white font-mono text-[8px] tracking-widest overflow-hidden">
+                <div className="bg-white rounded-2xl p-5 w-full max-w-[240px] flex flex-col gap-3 shadow-2xl">
+                  <h2 className="text-lg font-bold text-center">라벨 출력</h2>
+                  <div className="border-2 border-dashed border-gray-300 p-3 flex flex-col items-center gap-2 rounded-xl bg-white">
+                    <div className="w-full h-8 flex items-center justify-center text-black font-mono text-[8px] tracking-widest overflow-hidden">
                       || |||| ||| || |||| || |||| ||| || ||||
                     </div>
-                    <div className="font-mono text-xs font-bold">{selectedSku.barcode || 'NEW-12345678'}</div>
+                    <div className="font-mono text-[10px] font-bold text-black">{selectedSku.barcode || 'NEW-12345678'}</div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-gray-400 text-center uppercase">Print Quantity</label>
-                    <div className="flex items-center gap-3 justify-center">
-                      <button onClick={() => setPrintQty(Math.max(1, printQty - 1))} className="w-8 h-8 bg-gray-100 rounded-full font-bold border active:bg-gray-200">-</button>
-                      <input type="number" className="w-12 text-center text-lg font-bold outline-none" value={printQty} onChange={(e) => setPrintQty(parseInt(e.target.value) || 0)} />
-                      <button onClick={() => setPrintQty(printQty + 1)} className="w-8 h-8 bg-gray-100 rounded-full font-bold border active:bg-gray-200">+</button>
+                  <div className="flex flex-col gap-0.5">
+                    <label className="text-[9px] font-bold text-gray-400 text-center uppercase">Print Quantity</label>
+                    <div className="flex items-center gap-2 justify-center">
+                      <button onClick={() => setPrintQty(Math.max(1, printQty - 1))} className="w-7 h-7 bg-gray-100 rounded-full font-bold border active:bg-gray-200">-</button>
+                      <input type="number" className="w-10 text-center text-base font-bold outline-none" value={printQty} onChange={(e) => setPrintQty(parseInt(e.target.value) || 0)} />
+                      <button onClick={() => setPrintQty(printQty + 1)} className="w-7 h-7 bg-gray-100 rounded-full font-bold border active:bg-gray-200">+</button>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <button onClick={() => setIsPrintPopupOpen(false)} className="flex-1 p-3 bg-gray-100 rounded-xl font-bold text-sm active:bg-gray-200">취소</button>
-                    <button onClick={() => setIsPrintPopupOpen(false)} className="flex-1 p-3 bg-blue-600 text-white rounded-xl font-bold text-sm active:bg-blue-700">출력</button>
+                  <div className="flex gap-2 mt-1">
+                    <button onClick={() => setIsPrintPopupOpen(false)} className="flex-1 p-2.5 bg-gray-100 rounded-xl font-bold text-sm active:bg-gray-200">취소</button>
+                    <button onClick={() => setIsPrintPopupOpen(false)} className="flex-1 p-2.5 bg-black text-white rounded-xl font-bold text-sm active:bg-gray-900">출력</button>
                   </div>
                 </div>
               </div>
