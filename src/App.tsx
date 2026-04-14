@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ArrowLeft, X, Image as ImageIcon, Check, Barcode } from 'lucide-react'
 
-type Screen = 'ASN_INPUT' | 'SKU_LIST' | 'DETAIL'
+type Screen = 'HOME' | 'ASN_INPUT' | 'SKU_LIST' | 'DETAIL'
 type Mode = 'Standard' | 'Basic'
 type Status = '대기' | '진행중' | '완료'
 
@@ -32,7 +32,7 @@ const MOCK_SKUS: SKU[] = [
 const DEFECT_REASONS = ['파손', '오염', '사이즈 오류', '색상 불량', '봉제 불량']
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('ASN_INPUT')
+  const [screen, setScreen] = useState<Screen>('HOME')
   const [mode] = useState<Mode>('Standard')
   const [asn, setAsn] = useState('')
   const [skus, setSkus] = useState<SKU[]>(MOCK_SKUS)
@@ -106,12 +106,18 @@ export default function App() {
     e.target.select()
   }
 
+  const handleBack = () => {
+    if (screen === 'DETAIL') setScreen('SKU_LIST')
+    else if (screen === 'SKU_LIST') setScreen('ASN_INPUT')
+    else if (screen === 'ASN_INPUT') setScreen('HOME')
+  }
+
   const renderHeader = (title: string, showBack = true, showWms = false) => (
     <header className="bg-black text-white px-3 py-2 flex flex-col gap-0.5 shadow-md shrink-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {showBack && (
-            <button onClick={() => setScreen(screen === 'DETAIL' ? 'SKU_LIST' : 'ASN_INPUT')} className="p-1">
+            <button onClick={handleBack} className="p-1 -ml-1">
               <ArrowLeft size={22} />
             </button>
           )}
@@ -141,10 +147,41 @@ export default function App() {
 
   const renderScreen = () => {
     switch (screen) {
+      case 'HOME':
+        return (
+          <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+            {renderHeader('WMS 홈', false, true)}
+            <div className="flex-1 flex flex-col p-4 gap-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setScreen('ASN_INPUT')}
+                  className="aspect-square bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 shadow-sm active:bg-gray-100 transition-colors"
+                >
+                  <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                    <Check size={32} />
+                  </div>
+                  <span className="font-bold text-gray-800">입고검수</span>
+                </button>
+                <button
+                  onClick={() => alert('준비 중입니다.')}
+                  className="aspect-square bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 shadow-sm active:bg-gray-100 transition-colors"
+                >
+                  <div className="w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
+                    <ArrowLeft size={32} className="rotate-180" />
+                  </div>
+                  <span className="font-bold text-gray-800">재고이동</span>
+                </button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest pb-8">
+              Logged in as: Inspector-01
+            </div>
+          </div>
+        )
       case 'ASN_INPUT':
         return (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
-            {renderHeader('ASN 입고', false, true)}
+            {renderHeader('ASN 입고', true, true)}
             <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 text-center">
               <div className="bg-gray-100 p-4 rounded-full text-gray-400 mb-2">
                 <Barcode size={48} />
