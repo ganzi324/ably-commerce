@@ -23,7 +23,16 @@ export default function App() {
   const [skus, setSkus] = useState<SKU[]>(MOCK_SKUS)
   const [selectedSkuId, setSelectedSkuId] = useState<string | null>(null)
 
+  const [isPrintPopupOpen, setIsPrintPopupOpen] = useState(false)
+  const [printQty, setPrintQty] = useState(0)
+
   const selectedSku = skus.find(s => s.id === selectedSkuId)
+
+  const handlePrint = () => {
+    if (!selectedSku) return
+    setPrintQty(selectedSku.receivedQty)
+    setIsPrintPopupOpen(true)
+  }
 
   const renderScreen = () => {
     switch (screen) {
@@ -85,7 +94,7 @@ export default function App() {
       case 'DETAIL':
         if (!selectedSku) return null
         return (
-          <div className="p-4 flex flex-col gap-4">
+          <div className="p-4 flex flex-col gap-4 relative">
              <div className="flex items-center gap-2">
               <button onClick={() => setScreen('SKU_LIST')} className="p-2 border rounded">Back</button>
               <h1 className="text-xl font-bold">Inspection Detail</h1>
@@ -162,13 +171,41 @@ export default function App() {
 
             <button 
               className="mt-4 bg-green-600 text-white p-4 rounded-lg text-xl font-bold"
-              onClick={() => {
-                const randomBarcode = selectedSku.barcode || Math.random().toString(36).substring(2, 12).toUpperCase()
-                alert(`Generate & Print Barcode\n\nBarcode: ${randomBarcode}\nQuantity: ${selectedSku.receivedQty}`)
-              }}
+              onClick={handlePrint}
             >
               Generate & Print Barcode
             </button>
+
+            {isPrintPopupOpen && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-xl p-6 w-full max-w-[320px] flex flex-col gap-4 shadow-2xl">
+                  <h2 className="text-xl font-bold text-center">Print Label</h2>
+                  
+                  <div className="border-2 border-dashed border-gray-300 p-4 flex flex-col items-center gap-2">
+                    <div className="w-full h-12 bg-black flex items-center justify-center text-white font-mono text-xs overflow-hidden">
+                      ||| || |||| ||| || ||||
+                    </div>
+                    <div className="font-mono text-sm">
+                      {selectedSku.barcode || 'NEW-BARCODE-123'}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-bold text-gray-500 text-center">Print Quantity</label>
+                    <div className="flex items-center gap-4 justify-center">
+                      <button onClick={() => setPrintQty(Math.max(1, printQty - 1))} className="w-10 h-10 bg-gray-100 rounded-full">-</button>
+                      <input type="number" className="w-16 text-center text-xl font-bold" value={printQty} onChange={(e) => setPrintQty(parseInt(e.target.value) || 0)} />
+                      <button onClick={() => setPrintQty(printQty + 1)} className="w-10 h-10 bg-gray-100 rounded-full">+</button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button onClick={() => setIsPrintPopupOpen(false)} className="flex-1 p-3 bg-gray-100 rounded-lg font-bold">Cancel</button>
+                    <button onClick={() => setIsPrintPopupOpen(false)} className="flex-1 p-3 bg-blue-600 text-white rounded-lg font-bold">Print</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )
     }
