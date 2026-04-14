@@ -236,7 +236,7 @@ export default function App() {
           <div className="flex flex-col h-screen overflow-hidden">
             {renderHeader('상품 검수')}
             
-            {/* Product Info Summary */}
+            {/* Product Info Summary (Fixed) */}
             <div className="bg-gray-50 p-2.5 border-b border-gray-200 flex flex-col gap-0.5 shrink-0">
               <div className="text-xs text-blue-600 font-bold">{selectedSku.code}</div>
               <div className="font-bold text-lg leading-tight">{selectedSku.name}</div>
@@ -246,9 +246,10 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-3">
-              {/* Image Toggle Section */}
-              <div className="flex flex-col gap-1">
+            {/* Main Content Area (Scrollable only for defect items) */}
+            <div className="flex-1 flex flex-col overflow-hidden p-2 gap-3">
+              {/* Image Section (Shrinkable but visible) */}
+              <div className="shrink-0 flex flex-col gap-1">
                 {showImage ? (
                   <div className="relative">
                     <div 
@@ -272,8 +273,8 @@ export default function App() {
                 )}
               </div>
 
-              {/* Normal Quantity Section */}
-              <div className="flex flex-col gap-1.5 overflow-hidden">
+              {/* Normal Quantity Section (Fixed height) */}
+              <div className="shrink-0 flex flex-col gap-1.5 overflow-hidden">
                 <div className="text-sm font-bold">정상 수량</div>
                 <div className="flex items-center gap-1.5">
                   <button 
@@ -301,75 +302,74 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Defect Quantity Section */}
-              <div className="flex flex-col gap-1.5 border-t border-gray-100 pt-2">
-                <div className="flex justify-between items-center">
-                  <div className="text-xs font-bold">결함 수량</div>
+              {/* Defect Section Wrapper */}
+              <div className="flex-1 flex flex-col min-h-0 border-t border-gray-100 pt-2 gap-2">
+                <div className="shrink-0 flex justify-between items-center">
+                  <div className="text-sm font-bold">결함 수량</div>
                   <div className="text-[11px] font-bold text-red-600">총 {totalDefects}개</div>
                 </div>
                 
                 <button 
                   onClick={() => setIsDefectModalOpen(true)}
-                  className="w-full p-2 bg-red-50 text-red-600 rounded-lg font-bold text-xs border border-red-100 flex items-center justify-center gap-1 active:bg-red-100"
+                  className="shrink-0 w-full p-2 bg-red-50 text-red-600 rounded-lg font-bold text-xs border border-red-100 flex items-center justify-center gap-1 active:bg-red-100"
                 >
                   + 결함 추가
                 </button>
 
-                {selectedSku.defects.length > 0 && (
-                  <div className="flex flex-col gap-1.5">
-                    {selectedSku.defects.map((d) => (
-                      <div key={d.id} className="bg-white border border-gray-200 rounded-lg p-1.5 flex items-center justify-between shadow-sm">
-                        <span className="font-bold text-[11px] text-gray-700 truncate flex-1 mr-2">{d.reason}</span>
-                        <div className="flex items-center gap-1">
-                          <button 
-                            className="w-8 h-8 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
-                            onClick={() => updateDefectQty(selectedSku.id, d.id, -1)}
-                          >-</button>
-                          <input 
-                            type="number"
-                            className="w-12 h-8 text-center text-sm font-bold border border-gray-300 rounded focus:border-blue-500 outline-none"
-                            value={d.qty}
-                            onFocus={handleInputFocus}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value) || 1
-                              const newDefects = selectedSku.defects.map(def => def.id === d.id ? { ...def, qty: val } : def)
-                              validateAndSetQty(selectedSku.id, selectedSku.receivedQty, newDefects)
-                            }}
-                          />
-                          <button 
-                            className="w-8 h-8 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
-                            onClick={() => updateDefectQty(selectedSku.id, d.id, 1)}
-                          >+</button>
-                          <button 
-                            onClick={() => deleteDefect(selectedSku.id, d.id)}
-                            className="w-8 h-8 flex items-center justify-center text-gray-400 bg-gray-100 rounded active:bg-gray-200 ml-0.5"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
+                {/* Only this part scrollable */}
+                <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-0.5">
+                  {selectedSku.defects.length > 0 && selectedSku.defects.map((d) => (
+                    <div key={d.id} className="bg-white border border-gray-200 rounded-lg p-1.5 flex items-center justify-between shadow-sm shrink-0">
+                      <span className="font-bold text-[11px] text-gray-700 truncate flex-1 mr-2">{d.reason}</span>
+                      <div className="flex items-center gap-1">
+                        <button 
+                          className="w-8 h-8 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
+                          onClick={() => updateDefectQty(selectedSku.id, d.id, -1)}
+                        >-</button>
+                        <input 
+                          type="number"
+                          className="w-12 h-8 text-center text-sm font-bold border border-gray-300 rounded focus:border-blue-500 outline-none"
+                          value={d.qty}
+                          onFocus={handleInputFocus}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1
+                            const newDefects = selectedSku.defects.map(def => def.id === d.id ? { ...def, qty: val } : def)
+                            validateAndSetQty(selectedSku.id, selectedSku.receivedQty, newDefects)
+                          }}
+                        />
+                        <button 
+                          className="w-8 h-8 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
+                          onClick={() => updateDefectQty(selectedSku.id, d.id, 1)}
+                        >+</button>
+                        <button 
+                          onClick={() => deleteDefect(selectedSku.id, d.id)}
+                          className="w-8 h-8 flex items-center justify-center text-gray-400 bg-gray-100 rounded active:bg-gray-200 ml-0.5"
+                        >
+                          <X size={16} />
+                        </button>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                  
+                  {mode === 'Standard' && (
+                    <button 
+                      className="mt-1 bg-green-50 text-green-700 p-2 rounded-lg font-bold text-xs border border-green-200 active:bg-green-100 shadow-sm shrink-0"
+                      onClick={() => {
+                        setPrintQty(selectedSku.receivedQty)
+                        setIsPrintPopupOpen(true)
+                      }}
+                    >
+                      바코드 생성 및 라벨 출력
+                    </button>
+                  )}
+                </div>
               </div>
-
-              {mode === 'Standard' && (
-                <button 
-                  className="mt-1 bg-green-50 text-green-700 p-2 rounded-lg font-bold text-xs border border-green-200 active:bg-green-100 shadow-sm"
-                  onClick={() => {
-                    setPrintQty(selectedSku.receivedQty)
-                    setIsPrintPopupOpen(true)
-                  }}
-                >
-                  바코드 생성 및 라벨 출력
-                </button>
-              )}
             </div>
 
             <div className="p-2 bg-white border-t border-gray-200 shrink-0">
               <button 
                 onClick={() => setIsCompletePopupOpen(true)}
-                className="w-full bg-black text-white p-3 rounded-lg font-bold text-base shadow active:bg-gray-900"
+                className="w-full bg-black text-white p-3 rounded-lg font-bold text-lg shadow active:bg-gray-900"
               >
                 SKU 검수완료
               </button>
