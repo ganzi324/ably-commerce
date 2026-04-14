@@ -5,14 +5,26 @@
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  justify-content: center;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f3f4f6;
+  background-color: #e5e7eb; /* gray-200 */
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* PDA Specific optimization for no bounce/scroll outside app */
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
