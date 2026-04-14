@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { ArrowLeft, X, Image as ImageIcon, Check, Barcode } from 'lucide-react'
 
 type Screen = 'ASN_INPUT' | 'SKU_LIST' | 'DETAIL'
