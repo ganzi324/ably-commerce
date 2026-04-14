@@ -42,6 +42,7 @@ export default function App() {
   const [isCompletePopupOpen, setIsCompletePopupOpen] = useState(false)
   const [isPrintPopupOpen, setIsPrintPopupOpen] = useState(false)
   const [printQty, setPrintQty] = useState(0)
+  const [isQtyAlertOpen, setIsQtyAlertOpen] = useState(false)
 
   const selectedSku = skus.find(s => s.id === selectedSkuId)
   
@@ -49,32 +50,40 @@ export default function App() {
   const totalReceived = skus.reduce((acc, s) => acc + s.receivedQty + s.defects.reduce((dAcc, d) => dAcc + d.qty, 0), 0)
   const progressPercent = Math.round((totalReceived / totalExpected) * 100) || 0
 
+  const validateAndSetQty = (skuId: string, newReceivedQty: number, newDefects?: Defect[]) => {
+    const sku = skus.find(s => s.id === skuId)
+    if (!sku) return false
+    
+    const defects = newDefects || sku.defects
+    const currentTotalDefects = defects.reduce((acc, d) => acc + d.qty, 0)
+    
+    if (newReceivedQty + currentTotalDefects > sku.expectedQty) {
+      setIsQtyAlertOpen(true)
+      return false
+    }
+    
+    setSkus(skus.map(s => s.id === skuId ? { ...s, receivedQty: newReceivedQty, defects: defects } : s))
+    return true
+  }
+
   const handleDefectAdd = (reason: string) => {
     if (!selectedSku) return
-    const newSkus = skus.map(s => {
-      if (s.id === selectedSku.id) {
-        const existing = s.defects.find(d => d.reason === reason)
-        if (existing) {
-          return { ...s, defects: s.defects.map(d => d.reason === reason ? { ...d, qty: d.qty + 1 } : d) }
-        }
-        return { ...s, defects: [...s.defects, { id: Math.random().toString(), reason, qty: 1 }] }
-      }
-      return s
-    })
-    setSkus(newSkus)
+    const existing = selectedSku.defects.find(d => d.reason === reason)
+    let newDefects: Defect[]
+    if (existing) {
+      newDefects = selectedSku.defects.map(d => d.reason === reason ? { ...d, qty: d.qty + 1 } : d)
+    } else {
+      newDefects = [...selectedSku.defects, { id: Math.random().toString(), reason, qty: 1 }]
+    }
+    validateAndSetQty(selectedSku.id, selectedSku.receivedQty, newDefects)
     setIsDefectModalOpen(false)
   }
 
   const updateDefectQty = (skuId: string, defectId: string, delta: number) => {
-    setSkus(skus.map(s => {
-      if (s.id === skuId) {
-        return {
-          ...s,
-          defects: s.defects.map(d => d.id === defectId ? { ...d, qty: Math.max(1, d.qty + delta) } : d)
-        }
-      }
-      return s
-    }))
+    const sku = skus.find(s => s.id === skuId)
+    if (!sku) return
+    const newDefects = sku.defects.map(d => d.id === defectId ? { ...d, qty: Math.max(1, d.qty + delta) } : d)
+    validateAndSetQty(skuId, sku.receivedQty, newDefects)
   }
 
   const deleteDefect = (skuId: string, defectId: string) => {
@@ -97,7 +106,7 @@ export default function App() {
     e.target.select()
   }
 
-  const renderHeader = (title: string, showBack = true) => (
+  const renderHeader = (title: string, showBack = true, showWms = false) => (
     <header className="bg-black text-white p-2 flex flex-col gap-0.5 shadow-md shrink-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -108,7 +117,7 @@ export default function App() {
           )}
           <div className="flex flex-col">
             <span className="font-light text-base leading-tight">{title}</span>
-            <span className="text-[9px] text-gray-400 font-bold tracking-wider">ABLY WMS</span>
+            {showWms && <span className="text-[9px] text-gray-400 font-bold tracking-wider">ABLY WMS</span>}
           </div>
           {(screen === 'SKU_LIST' || screen === 'DETAIL') && (
             <span className="bg-blue-600 text-[9px] px-1.5 py-0.5 rounded-full font-bold ml-1">
@@ -125,7 +134,7 @@ export default function App() {
         )}
       </div>
       {screen === 'SKU_LIST' && (
-        <div className="text-[10px] text-gray-400 ml-1">ASN: {asn}</div>
+        <div className="text-sm text-gray-400 ml-1 font-bold">ASN: {asn}</div>
       )}
     </header>
   )
@@ -135,7 +144,7 @@ export default function App() {
       case 'ASN_INPUT':
         return (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
-            {renderHeader('ASN 입고', false)}
+            {renderHeader('ASN 입고', false, true)}
             <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 text-center">
               <div className="bg-gray-100 p-4 rounded-full text-gray-400 mb-2">
                 <Barcode size={48} />
@@ -191,16 +200,16 @@ export default function App() {
                     setSelectedSkuId(sku.id)
                     setScreen('DETAIL')
                   }}
-                  className="w-full border-b border-gray-100 p-2.5 flex flex-col gap-0 text-left active:bg-gray-50"
+                  className="w-full border-b border-gray-100 p-3 flex flex-col gap-0.5 text-left active:bg-gray-50"
                 >
-                  <div className="text-[9px] text-blue-600 font-bold">{sku.code}</div>
-                  <div className="font-bold text-xs truncate">{sku.name}</div>
-                  <div className="text-[10px] text-gray-500">{sku.option}</div>
+                  <div className="text-[11px] text-blue-600 font-bold">{sku.code}</div>
+                  <div className="font-bold text-base truncate">{sku.name}</div>
+                  <div className="text-sm text-gray-500">{sku.option}</div>
                   <div className="flex justify-between items-center mt-1">
-                    <div className="text-[11px] font-bold">
-                      {sku.receivedQty}/{sku.expectedQty}
+                    <div className="text-base font-bold">
+                      {sku.receivedQty + sku.defects.reduce((acc, d) => acc + d.qty, 0)}/{sku.expectedQty}
                     </div>
-                    <div className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                    <div className={`text-sm px-2 py-0.5 rounded font-bold ${
                       sku.status === '완료' ? 'bg-green-100 text-green-700' :
                       sku.status === '진행중' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                     }`}>
@@ -221,6 +230,7 @@ export default function App() {
       case 'DETAIL':
         if (!selectedSku) return null
         const totalDefects = selectedSku.defects.reduce((acc, d) => acc + d.qty, 0)
+        const currentProgressQty = selectedSku.receivedQty + totalDefects
         
         return (
           <div className="flex flex-col h-screen overflow-hidden">
@@ -228,11 +238,11 @@ export default function App() {
             
             {/* Product Info Summary */}
             <div className="bg-gray-50 p-2 border-b border-gray-200 flex flex-col gap-0 shrink-0">
-              <div className="text-[9px] text-blue-600 font-bold">{selectedSku.code}</div>
-              <div className="font-bold text-xs leading-tight">{selectedSku.name}</div>
-              <div className="flex justify-between items-center text-[10px]">
+              <div className="text-[11px] text-blue-600 font-bold">{selectedSku.code}</div>
+              <div className="font-bold text-base leading-tight">{selectedSku.name}</div>
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-gray-500">{selectedSku.option}</span>
-                <span className="font-bold text-sm">진행: {selectedSku.receivedQty}/{selectedSku.expectedQty}</span>
+                <span className="font-bold text-lg">진행: {currentProgressQty}/{selectedSku.expectedQty}</span>
               </div>
             </div>
 
@@ -267,25 +277,25 @@ export default function App() {
                 <div className="text-xs font-bold">정상 수량</div>
                 <div className="flex items-center gap-1">
                   <button 
-                    className="w-10 h-10 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
+                    className="w-11 h-11 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
                     onClick={() => {
-                      setSkus(skus.map(s => s.id === selectedSku.id ? { ...s, receivedQty: Math.max(0, s.receivedQty - 1) } : s))
+                      validateAndSetQty(selectedSku.id, Math.max(0, selectedSku.receivedQty - 1))
                     }}
                   >-</button>
                   <input 
                     type="number"
-                    className="flex-1 h-10 text-center text-xl font-bold bg-white border border-gray-300 rounded-lg focus:border-blue-500 outline-none"
+                    className="flex-1 h-11 text-center text-2xl font-bold bg-white border border-gray-300 rounded-lg focus:border-blue-500 outline-none"
                     value={selectedSku.receivedQty}
                     onFocus={handleInputFocus}
                     onChange={(e) => {
                       const val = parseInt(e.target.value) || 0
-                      setSkus(skus.map(s => s.id === selectedSku.id ? { ...s, receivedQty: val } : s))
+                      validateAndSetQty(selectedSku.id, val)
                     }}
                   />
                   <button 
-                    className="w-10 h-10 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
+                    className="w-11 h-11 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
                     onClick={() => {
-                      setSkus(skus.map(s => s.id === selectedSku.id ? { ...s, receivedQty: s.receivedQty + 1 } : s))
+                      validateAndSetQty(selectedSku.id, selectedSku.receivedQty + 1)
                     }}
                   >+</button>
                 </div>
@@ -312,30 +322,29 @@ export default function App() {
                         <span className="font-bold text-[11px] text-gray-700 truncate flex-1 mr-2">{d.reason}</span>
                         <div className="flex items-center gap-1">
                           <button 
-                            className="w-7 h-7 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
+                            className="w-8 h-8 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
                             onClick={() => updateDefectQty(selectedSku.id, d.id, -1)}
                           >-</button>
                           <input 
                             type="number"
-                            className="w-10 h-7 text-center text-xs font-bold border border-gray-300 rounded focus:border-blue-500 outline-none"
+                            className="w-12 h-8 text-center text-sm font-bold border border-gray-300 rounded focus:border-blue-500 outline-none"
                             value={d.qty}
                             onFocus={handleInputFocus}
                             onChange={(e) => {
                               const val = parseInt(e.target.value) || 1
-                              setSkus(skus.map(s => s.id === selectedSku.id ? {
-                                ...s, defects: s.defects.map(def => def.id === d.id ? { ...def, qty: val } : def)
-                              } : s))
+                              const newDefects = selectedSku.defects.map(def => def.id === d.id ? { ...def, qty: val } : def)
+                              validateAndSetQty(selectedSku.id, selectedSku.receivedQty, newDefects)
                             }}
                           />
                           <button 
-                            className="w-7 h-7 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
+                            className="w-8 h-8 bg-gray-50 rounded text-lg font-bold border border-gray-200 active:bg-gray-200 flex items-center justify-center"
                             onClick={() => updateDefectQty(selectedSku.id, d.id, 1)}
                           >+</button>
                           <button 
                             onClick={() => deleteDefect(selectedSku.id, d.id)}
-                            className="w-7 h-7 flex items-center justify-center text-gray-400 bg-gray-100 rounded active:bg-gray-200 ml-0.5"
+                            className="w-8 h-8 flex items-center justify-center text-gray-400 bg-gray-100 rounded active:bg-gray-200 ml-0.5"
                           >
-                            <X size={14} />
+                            <X size={16} />
                           </button>
                         </div>
                       </div>
@@ -367,6 +376,19 @@ export default function App() {
             </div>
 
             {/* Modals & Popups */}
+            {isQtyAlertOpen && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[60]">
+                <div className="bg-white rounded-2xl p-5 w-full max-w-[240px] flex flex-col gap-4 shadow-2xl text-center">
+                  <div className="flex flex-col gap-2 text-red-600">
+                    <X size={48} className="mx-auto" />
+                    <h2 className="text-lg font-bold">수량 초과</h2>
+                    <p className="text-gray-500 text-xs leading-relaxed">입고 예정 수량을 초과할 수 없습니다.</p>
+                  </div>
+                  <button onClick={() => setIsQtyAlertOpen(false)} className="w-full p-2 bg-blue-600 text-white rounded-xl font-bold active:bg-blue-700 text-sm">확인</button>
+                </div>
+              </div>
+            )}
+
             {isDefectModalOpen && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
                 <div className="bg-white rounded-2xl w-full max-w-[240px] overflow-hidden shadow-2xl">
@@ -410,17 +432,17 @@ export default function App() {
                 <div className="bg-white rounded-2xl p-5 w-full max-w-[240px] flex flex-col gap-3 shadow-2xl">
                   <h2 className="text-lg font-bold text-center">라벨 출력</h2>
                   <div className="border-2 border-dashed border-gray-300 p-3 flex flex-col items-center gap-2 rounded-xl bg-white">
-                    <div className="w-full h-8 flex items-center justify-center text-black font-mono text-[8px] tracking-widest overflow-hidden">
-                      || |||| ||| || |||| || |||| ||| || ||||
+                    <div className="w-full flex items-center justify-center text-black font-mono text-[8px] tracking-widest overflow-hidden whitespace-nowrap">
+                      || |||| ||| || |||| || |||| ||| || |||| || |||| ||| || ||||
                     </div>
                     <div className="font-mono text-[10px] font-bold text-black">{selectedSku.barcode || 'NEW-12345678'}</div>
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <label className="text-[9px] font-bold text-gray-400 text-center uppercase">Print Quantity</label>
+                    <label className="text-[10px] font-bold text-gray-400 text-center uppercase">출력 수량</label>
                     <div className="flex items-center gap-2 justify-center">
                       <button onClick={() => setPrintQty(Math.max(1, printQty - 1))} className="w-7 h-7 bg-gray-100 rounded-full font-bold border active:bg-gray-200">-</button>
-                      <input type="number" className="w-10 text-center text-base font-bold outline-none" value={printQty} onChange={(e) => setPrintQty(parseInt(e.target.value) || 0)} />
-                      <button onClick={() => setPrintQty(printQty + 1)} className="w-7 h-7 bg-gray-100 rounded-full font-bold border active:bg-gray-200">+</button>
+                      <input type="number" className="w-12 text-center text-lg font-bold outline-none" value={printQty} onFocus={handleInputFocus} onChange={(e) => setPrintQty(parseInt(e.target.value) || 0)} />
+                      <button onClick={() => setPrintQty(printQty + 1)} className="w-8 h-8 bg-gray-100 rounded-full font-bold border active:bg-gray-200">+</button>
                     </div>
                   </div>
                   <div className="flex gap-2 mt-1">
