@@ -107,20 +107,20 @@ export default function App() {
   }
 
   const renderHeader = (title: string, showBack = true, showWms = false) => (
-    <header className="bg-black text-white p-2 flex flex-col gap-0.5 shadow-md shrink-0">
+    <header className="bg-black text-white px-3 py-2 flex flex-col gap-0.5 shadow-md shrink-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {showBack && (
             <button onClick={() => setScreen(screen === 'DETAIL' ? 'SKU_LIST' : 'ASN_INPUT')} className="p-1">
-              <ArrowLeft size={20} />
+              <ArrowLeft size={22} />
             </button>
           )}
           <div className="flex flex-col">
-            <span className="font-light text-base leading-tight">{title}</span>
-            {showWms && <span className="text-[9px] text-gray-400 font-bold tracking-wider">ABLY WMS</span>}
+            <span className="font-medium text-lg leading-tight">{title}</span>
+            {showWms && <span className="text-[10px] text-gray-400 font-bold tracking-wider">ABLY WMS</span>}
           </div>
           {(screen === 'SKU_LIST' || screen === 'DETAIL') && (
-            <span className="bg-blue-600 text-[9px] px-1.5 py-0.5 rounded-full font-bold ml-1">
+            <span className="bg-blue-600 text-[11px] px-2 py-0.5 rounded-full font-bold ml-1">
               {mode}
             </span>
           )}
@@ -128,8 +128,8 @@ export default function App() {
         {(screen === 'SKU_LIST' || screen === 'DETAIL') && (
           <input
             type="text"
-            placeholder="바코드 입력"
-            className="bg-gray-800 text-white text-[10px] p-1 rounded w-20 outline-none border border-gray-700"
+            placeholder="바코드"
+            className="bg-gray-800 text-white text-[11px] p-1.5 rounded w-16 outline-none border border-gray-700"
           />
         )}
       </div>
@@ -150,21 +150,21 @@ export default function App() {
                 <Barcode size={48} />
               </div>
               <div className="flex flex-col gap-1">
-                <div className="text-lg font-bold">입고번호 입력</div>
-                <div className="text-xs text-gray-500">바코드를 스캔하거나 직접 입력하세요.</div>
+                <div className="text-xl font-bold">입고번호 입력</div>
+                <div className="text-sm text-gray-500">바코드를 스캔하거나 직접 입력하세요.</div>
               </div>
               <div className="w-full flex flex-col gap-3">
                 <input
                   type="text"
                   placeholder="ASN-2026-04-001"
-                  className="border border-gray-300 p-2.5 text-center text-sm rounded-lg focus:border-blue-600 outline-none w-full shadow-inner"
+                  className="border border-gray-300 p-3 text-center text-base rounded-lg focus:border-blue-600 outline-none w-full shadow-inner"
                   value={asn}
                   onChange={(e) => setAsn(e.target.value)}
                   autoFocus
                 />
                 <button
                   onClick={() => asn && setScreen('SKU_LIST')}
-                  className="bg-gray-500 text-white p-3 rounded-lg text-base font-bold shadow active:bg-gray-600 transition-colors w-full"
+                  className="bg-gray-500 text-white p-3 rounded-lg text-lg font-bold shadow active:bg-gray-600 transition-colors w-full"
                 >
                   검수 시작
                 </button>
@@ -179,11 +179,11 @@ export default function App() {
             
             {/* Progress Section */}
             <div className="bg-gray-100 p-2 border-b border-gray-200 shrink-0">
-              <div className="flex justify-between text-sm font-bold mb-1">
+              <div className="flex justify-between text-base font-bold mb-1">
                 <span>전체 진행률</span>
                 <span className="text-blue-600">{totalReceived}/{totalExpected} ({progressPercent}%)</span>
               </div>
-              <div className="w-full bg-gray-300 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-gray-300 h-2.5 rounded-full overflow-hidden">
                 <div 
                   className="bg-green-500 h-full transition-all duration-500" 
                   style={{ width: `${progressPercent}%` }}
@@ -202,14 +202,14 @@ export default function App() {
                   }}
                   className="w-full border-b border-gray-100 p-3 flex flex-col gap-0.5 text-left active:bg-gray-50"
                 >
-                  <div className="text-[11px] text-blue-600 font-bold">{sku.code}</div>
-                  <div className="font-bold text-base truncate">{sku.name}</div>
-                  <div className="text-sm text-gray-500">{sku.option}</div>
-                  <div className="flex justify-between items-center mt-1">
-                    <div className="text-base font-bold">
+                  <div className="text-xs text-blue-600 font-bold">{sku.code}</div>
+                  <div className="font-bold text-lg truncate leading-tight">{sku.name}</div>
+                  <div className="text-base text-gray-500">{sku.option}</div>
+                  <div className="flex justify-between items-center mt-1.5">
+                    <div className="text-lg font-bold">
                       {sku.receivedQty + sku.defects.reduce((acc, d) => acc + d.qty, 0)}/{sku.expectedQty}
                     </div>
-                    <div className={`text-sm px-2 py-0.5 rounded font-bold ${
+                    <div className={`text-base px-2.5 py-0.5 rounded font-bold ${
                       sku.status === '완료' ? 'bg-green-100 text-green-700' :
                       sku.status === '진행중' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                     }`}>
@@ -221,7 +221,7 @@ export default function App() {
             </div>
 
             <div className="p-2 bg-white border-t border-gray-200 shrink-0">
-              <button className="w-full bg-black text-white p-2.5 rounded-lg font-bold text-base shadow active:bg-gray-900">
+              <button className="w-full bg-black text-white p-3 rounded-lg font-bold text-lg shadow active:bg-gray-900">
                 검수 완료
               </button>
             </div>
@@ -237,12 +237,12 @@ export default function App() {
             {renderHeader('상품 검수')}
             
             {/* Product Info Summary */}
-            <div className="bg-gray-50 p-2 border-b border-gray-200 flex flex-col gap-0 shrink-0">
-              <div className="text-[11px] text-blue-600 font-bold">{selectedSku.code}</div>
-              <div className="font-bold text-base leading-tight">{selectedSku.name}</div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-gray-500">{selectedSku.option}</span>
-                <span className="font-bold text-lg">진행: {currentProgressQty}/{selectedSku.expectedQty}</span>
+            <div className="bg-gray-50 p-2.5 border-b border-gray-200 flex flex-col gap-0.5 shrink-0">
+              <div className="text-xs text-blue-600 font-bold">{selectedSku.code}</div>
+              <div className="font-bold text-lg leading-tight">{selectedSku.name}</div>
+              <div className="flex justify-between items-center">
+                <span className="text-base text-gray-500">{selectedSku.option}</span>
+                <span className="font-bold text-xl text-blue-600">진행: {currentProgressQty}/{selectedSku.expectedQty}</span>
               </div>
             </div>
 
@@ -265,26 +265,26 @@ export default function App() {
                 ) : (
                   <button 
                     onClick={() => setShowImage(true)}
-                    className="flex items-center justify-center gap-2 p-1.5 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-600 border border-gray-200"
+                    className="flex items-center justify-center gap-2 p-2 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 border border-gray-200"
                   >
-                    <ImageIcon size={12} /> 상품 이미지 보기
+                    <ImageIcon size={14} /> 상품 이미지 보기
                   </button>
                 )}
               </div>
 
               {/* Normal Quantity Section */}
-              <div className="flex flex-col gap-1.5">
-                <div className="text-xs font-bold">정상 수량</div>
-                <div className="flex items-center gap-1">
+              <div className="flex flex-col gap-1.5 overflow-hidden">
+                <div className="text-sm font-bold">정상 수량</div>
+                <div className="flex items-center gap-1.5">
                   <button 
-                    className="w-11 h-11 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
+                    className="w-11 h-11 bg-gray-50 rounded-lg text-2xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
                     onClick={() => {
                       validateAndSetQty(selectedSku.id, Math.max(0, selectedSku.receivedQty - 1))
                     }}
                   >-</button>
                   <input 
                     type="number"
-                    className="flex-1 h-11 text-center text-2xl font-bold bg-white border border-gray-300 rounded-lg focus:border-blue-500 outline-none"
+                    className="flex-1 min-w-0 h-11 text-center text-3xl font-bold bg-white border border-gray-300 rounded-lg focus:border-blue-500 outline-none"
                     value={selectedSku.receivedQty}
                     onFocus={handleInputFocus}
                     onChange={(e) => {
@@ -293,7 +293,7 @@ export default function App() {
                     }}
                   />
                   <button 
-                    className="w-11 h-11 bg-gray-50 rounded-lg text-xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
+                    className="w-11 h-11 bg-gray-50 rounded-lg text-2xl font-bold flex items-center justify-center border border-gray-200 active:bg-gray-200 shrink-0"
                     onClick={() => {
                       validateAndSetQty(selectedSku.id, selectedSku.receivedQty + 1)
                     }}
